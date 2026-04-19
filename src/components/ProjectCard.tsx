@@ -1,40 +1,54 @@
-import { ReactElement } from 'react';
+import React from 'react';
+import { projects } from '../data/projects';
 
 interface ProjectCardProps {
-  title: string;
-  description: string;
-  link: string;
+  project: typeof projects[0];
 }
 
-const ProjectCard = ({ title, description, link }: ProjectCardProps): ReactElement => {
-  return (
-    <article className="bg-surface p-6 rounded-lg shadow-sm hover-lift transition-all duration-300 flex flex-col">
-      <h3 className="text-xl font-bold mb-3 text-[#1a2e1a]">{title}</h3>
-      <p className="text-dim mb-4 flex-grow">{description}</p>
-      <a
-        href={link}
-        className="text-[#e66000] font-medium inline-flex items-center mt-auto"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        View Project
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-4 w-4 ml-1"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-          />
-        </svg>
-      </a>
-    </article>
-  );
-};
+const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => (
+  <article
+    key={project.id}
+    className="bg-surface p-6 rounded-lg shadow hover-lift slide-up"
+    style={{ animationDelay: `${0.2 + project.id * 0.1}s` }}
+    role="article"
+  >
+    {project.image && (
+      <img
+        src={project.image}
+        alt={project.title}
+        loading="lazy"
+        className="w-full h-48 object-cover rounded mb-4"
+      />
+    )}
+    <h3 className="text-2xl font-bold mb-2">{project.title}</h3>
+    <p className="text-dim mb-4">{project.description}</p>
+    <a
+      href={project.link}
+      className="text-accent hover:underline focus:outline-none focus:ring-2 focus:ring-accent-alt focus:ring-offset-2 rounded"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`View details for ${project.title}`}
+    >
+      View Project →
+    </a>
+  </article>
+);
 
-export default ProjectCard;
+const ProjectSection = () => (
+  <section id="projects" className="py-16" aria-labelledby="projects-heading">
+    <div className="container">
+      <h2 id="projects-heading" className="text-3xl md:text-4xl font-bold mb-8 slide-up">
+        Featured Projects
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" role="list">
+        {projects.map((project) => (
+          <li key={project.id} role="listitem">
+            <ProjectCard project={project} />
+          </li>
+        ))}
+      </div>
+    </div>
+  </section>
+);
+
+export default ProjectSection;

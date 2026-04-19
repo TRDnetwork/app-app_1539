@@ -1,1 +1,1 @@
-// No realtime functionality required for static portfolio site.
+/* Static site with no realtime requirements */

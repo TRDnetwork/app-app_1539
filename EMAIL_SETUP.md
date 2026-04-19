@@ -1,81 +1,49 @@
-# 📨 Email Setup for Portfolio Pro
+# 📨 Email Setup with Resend
 
-This guide walks you through setting up transactional email for your portfolio site using [Resend](https://resend.com).
+This app uses [Resend](https://resend.com) to send transactional emails from the contact form. All email logic is handled server-side via a Vercel serverless function to keep your API key secure.
 
----
+## 🔐 Step 1: Get Your Resend API Key
+1. Go to [https://resend.com](https://resend.com) and sign up or log in.
+2. Navigate to **API Keys** and create a new API key.
+3. Copy the key (it will look like `re_12345678...`).
 
-## 🔧 Step 1: Get Your Resend API Key
+## ⚙️ Step 2: Set Environment Variable in Vercel
+1. In your Vercel dashboard, go to your project settings.
+2. Navigate to **Environment Variables**.
+3. Add a new variable:
+   - **Key**: `RESEND_API_KEY`
+   - **Value**: Paste your Resend API key here
+   - ✅ Make sure this is **NOT** marked as "VITE_" or exposed to the client
+4. Redeploy your project.
 
-1. Go to [resend.com](https://resend.com) and sign up or log in.
-2. Navigate to **API Keys** and create a new key (e.g., `portfolio-pro-key`).
-3. Copy the generated key (it will look like `re_abc123...`).
+## 🌐 Step 3: Verify Your Sending Domain
+1. In Resend, go to **Domains** and click "Add Domain".
+2. Enter your domain (e.g., `portfolio-pro.com`) and follow DNS verification steps.
+3. Once verified, update the `fromEmail` in `api/contact.ts` to use your verified address (e.g., `hello@portfolio-pro.com`).
 
-> 🔐 **Never commit this key to version control.**
+## 🧪 Step 4: Test the Contact Form
+1. Fill out the contact form on your site.
+2. Check that:
+   - A notification email arrives at the owner inbox (`contact@portfolio-pro.com` or your updated address)
+   - The user receives a confirmation email
+   - No errors appear in the browser console or Vercel logs
 
----
+## 📣 Frontend Integration Note
+The frontend **does not** import any email SDK. It simply sends a POST request:
 
-## 🌐 Step 2: Set Environment Variables in Vercel
-
-1. Go to your project dashboard on [Vercel](https://vercel.com).
-2. Open your **Portfolio Pro** project.
-3. Navigate to **Settings > Environment Variables**.
-4. Add the following variables:
-
-| Key               | Value                     |
-|-------------------|---------------------------|
-| `RESEND_API_KEY`  | `re_abc123...` (your key) |
-| `OWNER_EMAIL`     | `you@yourdomain.com`      |
-
-> ❗ Use `RESEND_API_KEY`, **not** `VITE_RESEND_API_KEY` — the latter would expose it to the browser.
-
----
-
-## 📨 Step 3: Update Email Recipient (Optional)
-
-By default, emails are sent to `process.env.OWNER_EMAIL`. Make sure this is set to your real email address.
-
----
-
-## 🔄 Step 4: Verify Your Sending Domain
-
-1. In Resend dashboard, go to **Domains**.
-2. Add and verify your domain (e.g., `portfolio-pro.com`).
-3. Once verified, update the `from` field in `api/contact.ts` to use a verified email like `hello@portfolio-pro.com`.
-
----
-
-## 🚀 Step 5: Test the Contact Form
-
-1. Deploy your site.
-2. Fill out the contact form with real data.
-3. Check:
-   - You receive the notification email.
-   - The user receives a confirmation email.
-
----
-
-## 🛠 Frontend Integration Note
-
-The frontend **does not** import any email SDK. Instead, it sends form data via `fetch`:
-
-```ts
-await fetch('/api/contact', {
+```js
+fetch('/api/contact', {
   method: 'POST',
   body: JSON.stringify({ name, email, message }),
-  headers: { 'Content-Type': 'application/json' },
-});
+  headers: { 'Content-Type': 'application/json' }
+})
 ```
 
-This keeps the Resend SDK and API key securely on the server.
+Never use `import { Resend } from 'resend'` on the client — this keeps your API key safe.
 
----
+## 🛠 Troubleshooting
+- **500 error?** Check Vercel logs for Resend error messages.
+- **Email not arriving?** Confirm domain verification in Resend.
+- **Spam?** Use the honeypot field (`bot-field`) and ensure your domain has SPF/DKIM records.
 
-## 🧹 Honeypot & Security
-
-- A hidden `bot-field` is used to detect bots.
-- The server returns a 200 OK even for blocked submissions to avoid revealing bot detection.
-- All inputs are validated before sending.
-
----
-
-✅ Done! Your portfolio now securely sends contact form submissions.
+✅ You're all set! Your portfolio now accepts messages securely.

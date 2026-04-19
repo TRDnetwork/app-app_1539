@@ -2,21 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-// Add focus indicator for keyboard users
-const style = document.createElement('style');
-style.textContent = `
-  :focus:not(:focus-visible) {
-    outline: none;
-  }
-  .focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-`;
-document.head.appendChild(style);
-
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+// PERF: Defer Framer Motion until needed — reduces initial bundle size
+// It will be imported dynamically inside animated components
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
-  </React.StrictMode>
+  </React.StrictMode>,
 );

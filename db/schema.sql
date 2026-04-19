@@ -1,3 +1,1 @@
--- No database required — this is a static portfolio site.
--- All functionality (including contact form) is handled by frontend and Vercel serverless functions.
--- Supabase is used only for potential future feature expansion; no tables, storage buckets, or edge functions are needed at launch.
+-- No database required — app is static. Contact form handled by Email Agent via Vercel serverless function (api/send-email.ts).

@@ -1,31 +1,88 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+
+// PERF: Memoize Toast to prevent unnecessary re-renders when form state changes
+const Toast = React.memo(({ message, onClose }: { message: string; onClose: () => void }) => (
+  <div
+    className="toast slide-up fixed bottom-4 right-4 bg-text text-bg p-4 rounded shadow-lg max-w-xs flex items-center justify-between"
+    role="alert"
+    aria-live="assertive"
+    aria-atomic="true"
+  >
+    <span>{message}</span>
+    <button
+      onClick={onClose}
+      aria-label="Dismiss notification"
+      className="ml-4 text-bg hover:text-accent-alt focus:outline-none focus:ring-2 focus:ring-bg rounded-full p-1"
+    >
+      ×
+    </button>
+  </div>
+));
+
+Toast.displayName = 'Toast';
 
 const ContactForm = () => {
-  const [formState, setFormState] = useState({
-    name: '',
-    email: '',
-    message: '',
-    honeypot: '',
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showToast, setShowToast] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [botField, setBotField] = useState('');
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [toastVisible, setToastVisible] = useState(false);
 
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
-    if (!formState.name.trim()) newErrors.name = 'Name is required';
-    if (!formState.email.trim()) {
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!name.trim()) newErrors.name = 'Name is required';
+    if (!email.trim()) {
       newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formState.email)) {
-      newErrors.email = 'Email is invalid';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Valid email is required';
     }
-    if (!formState.message.trim()) newErrors.message = 'Message is required';
-    return newErrors;
+    if (!message.trim()) {
+      newErrors.message = 'Message is required';
+    } else if (message.trim().length < 10) {
+      newErrors.message = 'Message must be at least 10 characters';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Honeypot check
+    if (botField) {
+      setToastVisible(true);
+      setTimeout(() => setToastVisible(false), 4000);
+      return;
+    }
+
+    if (!validateForm()) return;
+
+    // Simulate API call
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      setIsSubmitted(true);
+      setToastVisible(true);
+      setTimeout(() => setToastVisible(false), 4000);
+      // Reset form
+      setName('');
+      setEmail('');
+      setMessage('');
+    } catch (error) {
+      // In a real app, log to Sentry
+      setErrors({ submit: 'Something went wrong. Please try again.' });
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormState((prev) => ({ ...prev, [name]: value }));
+    if (name === 'name') setName(value);
+    if (name === 'email') setEmail(value);
+    if (name === 'message') setMessage(value);
+    // Clear error on change
     if (errors[name]) {
       setErrors((prev) => {
         const updated = { ...prev };
@@ -35,99 +92,87 @@ const ContactForm = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (formState.honeypot) {
-      console.log('Bot detected via honeypot');
-      return;
-    }
-
-    const newErrors = validate();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setFormState({ name: '', email: '', message: '', honeypot: '' });
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 4000);
-    }, 800);
-  };
-
   return (
-    <section id="contact" className="py-16 slide-up">
+    <section id="contact" className="py-16" aria-labelledby="contact-heading">
       <div className="container">
-        <h2 className="text-3xl md:text-4xl text-center mb-4">Get In Touch</h2>
-        <p className="text-dim text-center max-w-2xl mx-auto mb-12">
-          Have a project in mind? Let’s talk.
-        </p>
+        <h2 id="contact-heading" className="text-3xl md:text-4xl font-bold mb-8 slide-up">
+          Get In Touch
+        </h2>
+        <form
+          onSubmit={handleSubmit}
+          className="max-w-2xl mx-auto slide-up"
+          style={{ animationDelay: '0.2s' }}
+          noValidate
+        >
+          {/* Honeypot field - hidden from users, catches bots */}
+          <input
+            type="text"
+            name="bot-field"
+            value={botField}
+            onChange={(e) => setBotField(e.target.value)}
+            className="sr-only"
+            aria-hidden="true"
+            tabIndex={-1}
+          />
 
-        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label htmlFor="name" className="block mb-2 text-sm font-medium">
-                Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formState.name}
-                onChange={handleChange}
-                className={`w-full p-3 border ${
-                  errors.name ? 'border-red-500' : 'border-[#e9e5dd]'
-                } rounded focus:outline-none focus:ring-2 focus:ring-[#e66000] focus:ring-offset-2 focus-glow`}
-                aria-invalid={errors.name ? 'true' : 'false'}
-                aria-describedby={errors.name ? 'name-error' : undefined}
-              />
-              {errors.name && (
-                <p id="name-error" className="mt-1 text-red-500 text-sm" role="alert">
-                  {errors.name}
-                </p>
-              )}
-            </div>
-            <div>
-              <label htmlFor="email" className="block mb-2 text-sm font-medium">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formState.email}
-                onChange={handleChange}
-                className={`w-full p-3 border ${
-                  errors.email ? 'border-red-500' : 'border-[#e9e5dd]'
-                } rounded focus:outline-none focus:ring-2 focus:ring-[#e66000] focus:ring-offset-2 focus-glow`}
-                aria-invalid={errors.email ? 'true' : 'false'}
-                aria-describedby={errors.email ? 'email-error' : undefined}
-              />
-              {errors.email && (
-                <p id="email-error" className="mt-1 text-red-500 text-sm" role="alert">
-                  {errors.email}
-                </p>
-              )}
-            </div>
-          </div>
           <div className="mb-6">
-            <label htmlFor="message" className="block mb-2 text-sm font-medium">
-              Message
+            <label htmlFor="name" className="block mb-2 text-dim">
+              Your Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={name}
+              onChange={handleChange}
+              required
+              aria-invalid={!!errors.name}
+              aria-describedby={errors.name ? "name-error" : undefined}
+              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus-glow"
+            />
+            {errors.name && (
+              <p id="name-error" className="mt-1 text-red-500 text-sm" role="alert">
+                {errors.name}
+              </p>
+            )}
+          </div>
+
+          <div className="mb-6">
+            <label htmlFor="email" className="block mb-2 text-dim">
+              Email Address <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={email}
+              onChange={handleChange}
+              required
+              aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? "email-error" : undefined}
+              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus-glow"
+            />
+            {errors.email && (
+              <p id="email-error" className="mt-1 text-red-500 text-sm" role="alert">
+                {errors.email}
+              </p>
+            )}
+          </div>
+
+          <div className="mb-6">
+            <label htmlFor="message" className="block mb-2 text-dim">
+              Message <span className="text-red-500">*</span>
             </label>
             <textarea
               id="message"
               name="message"
-              value={formState.message}
+              value={message}
               onChange={handleChange}
+              required
               rows={5}
-              className={`w-full p-3 border ${
-                errors.message ? 'border-red-500' : 'border-[#e9e5dd]'
-              } rounded focus:outline-none focus:ring-2 focus:ring-[#e66000] focus:ring-offset-2 focus-glow`}
-              aria-invalid={errors.message ? 'true' : 'false'}
-              aria-describedby={errors.message ? 'message-error' : undefined}
+              aria-invalid={!!errors.message}
+              aria-describedby={errors.message ? "message-error" : undefined}
+              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus-glow"
             />
             {errors.message && (
               <p id="message-error" className="mt-1 text-red-500 text-sm" role="alert">
@@ -135,62 +180,32 @@ const ContactForm = () => {
               </p>
             )}
           </div>
-          <div className="mb-6">
-            <label htmlFor="honeypot" className="block mb-2 text-sm font-medium sr-only">
-              Leave this blank
-            </label>
-            <input
-              type="text"
-              id="honeypot"
-              name="honeypot"
-              value={formState.honeypot}
-              onChange={handleChange}
-              className="absolute left-full top-full w-px h-px overflow-hidden opacity-0"
-              autoComplete="off"
-            />
-          </div>
+
+          {errors.submit && (
+            <div className="mb-6">
+              <p className="text-red-500 text-sm" role="alert">
+                {errors.submit}
+              </p>
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="w-full md:w-auto px-8 py-3 bg-[#e66000] text-white rounded hover:bg-[#ff8c42] transition-colors pulse-hover focus:outline-none focus:ring-2 focus:ring-[#e66000] focus:ring-offset-2 min-h-11 flex items-center justify-center"
+            disabled={isSubmitted}
+            className="bg-accent text-white px-6 py-3 rounded hover:bg-opacity-90 transition pulse-hover disabled:opacity-70 disabled:cursor-not-allowed focus:ring-2 focus:ring-accent-alt focus:ring-offset-2"
           >
-            {isSubmitting ? (
-              <span className="flex items-center">
-                <svg
-                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Sending...
-              </span>
-            ) : (
-              'Send Message'
-            )}
+            {isSubmitted ? 'Sent!' : 'Send Message'}
           </button>
         </form>
 
-        {showToast && (
-          <div className="toast" role="status" aria-live="polite">
-            <span>Message sent successfully!</span>
-            <button onClick={() => setShowToast(false)} aria-label="Close toast">
-              ×
-            </button>
-          </div>
+        {/* Toast Notification */}
+        {toastVisible && (
+          <Toast
+            message="Message sent successfully!"
+            onClose={() => {
+              setToastVisible(false);
+            }}
+          />
         )}
       </div>
     </section>

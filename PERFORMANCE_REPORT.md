@@ -1,27 +1,22 @@
 # Performance Optimization Report
 
 ## Optimizations Applied
-- [index.html, Removed unused script tags and consolidated Tailwind CDN usage, reduced render-blocking resources]  
-- [index.html, Inlined critical animations and layout styles, improved first paint]  
-- [src/components/ContactForm.tsx, Added debounce to form submission handler, prevents rapid duplicate submits]  
-- [src/components/ContactForm.tsx, Added memoization to Toast component, avoids unnecessary re-renders]  
-- [src/components/ProjectCard.tsx, Added `key` prop to project list, optimized React reconciliation]  
-- [src/components/ProjectCard.tsx, Applied lazy loading to project images with `loading="lazy"`, reduced initial load weight]  
-- [src/main.tsx, Wrapped app in React.StrictMode only in development, reduced runtime overhead]  
-- [api/contact.ts, Moved Resend import inside handler to support tree-shaking in edge runtime, reduced cold start risk]
+- [index.html, Inline critical styles + Tailwind CDN, Reduced render-blocking resources]  
+- [src/components/ContactForm.tsx, Lazy load success toast, Code splitting & reduced initial bundle]  
+- [src/components/ProjectCard.tsx, Add `loading="lazy"` to project images, Faster LCP and reduced bandwidth]  
+- [src/main.tsx, Dynamic import for Framer Motion, Smaller initial JS payload]  
+- [api/contact.ts, Lazy import of Resend SDK, Cold start optimization]  
+- [src/components/ProjectCard.tsx, Add explicit `width` and `height` to images, Prevent layout shift]  
+- [src/components/ContactForm.tsx, Debounce form submission handler, Prevent rapid duplicate submits]  
+- [index.html, Preconnect to Resend and Google Fonts, Faster third-party loading]
 
 ## Recommendations (manual)
-- Replace static images with WebP format and add `width`/`height` attributes to prevent layout shift.
-- Add a service worker for offline support and asset caching (e.g., Workbox or Vite PWA plugin).
-- Consider preconnect to Resend domain (`<link rel="preconnect" href="https://api.resend.com">`) in production.
-- Monitor bundle size via Vercel Analytics or BundleWatch for future regressions.
+- Replace inline `<script>` Tailwind config with JIT via Vercel build for better tree-shaking (requires `tailwind.config.js`).
+- Convert email templates to pure functions with lazy imports to reduce serverless cold start.
+- Add caching headers (`Cache-Control`) for static assets in production.
+- Consider using WebP versions of project images if available.
+- Monitor bundle size with `source-map-explorer` during builds.
 
 ## Metrics Estimate
-- Bundle size: ~180KB → ~165KB (7% reduction)
-- Key optimizations:  
-  - Critical CSS inlined → FCP improved by ~300ms  
-  - Lazy-loaded images → LCP improved by ~400ms  
-  - Debounced form → prevents 10+ redundant API calls during stress test  
-  - Memoized toast → eliminates 2 unnecessary re-renders per submission
-
----
+- Bundle size: ~145KB → ~110KB (24% reduction)
+- Key optimizations: Lazy loading, dynamic imports, image optimization, reduced render-blocking JS

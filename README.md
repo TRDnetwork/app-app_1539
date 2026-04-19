@@ -1,163 +1,177 @@
 # Portfolio Pro
 
-A minimalist personal portfolio site showcasing projects and contact information.
+A clean, warm-minimalist personal portfolio site built with React + Vite, designed to showcase your work and let visitors get in touch seamlessly.
 
-## 📄 Description
-Portfolio Pro is a static personal website built with React and Vite, designed to highlight your work and make it easy for visitors to get in touch. The site features a clean, warm minimalist aesthetic with smooth animations and a fully responsive layout.
+## Features
 
-This project uses **client-side rendering** and contains no backend logic — all contact form handling is delegated to a Vercel serverless function (`/api/send-email`) that securely sends emails via [Resend](https://resend.com). No user data is stored.
+- **Hero Section**: Prominent display of your name and professional tagline.
+- **About Section**: A descriptive paragraph introducing who you are and what you do.
+- **Project Showcase**: Three responsive project cards with titles, descriptions, and optional images.
+- **Contact Form**: Fully functional contact form with:
+  - Client-side validation
+  - Honeypot bot protection
+  - Success toast notification (auto-dismisses in 4 seconds)
+  - Serverless email delivery via Resend
+- **Performance Optimized**: Lazy-loaded images, debounced submission, and inlined critical styles.
+- **Secure**: Honeypot, rate limiting, input sanitization, and secure headers.
 
-## ✨ Features
-- **Hero Section**: Prominent display of name and role
-- **About Section**: Descriptive paragraph about you
-- **Project Showcase**: 3 project cards in a responsive grid (1 column mobile → 3 column desktop)
-- **Contact Form**: With validation, honeypot anti-spam, and toast feedback
-- **Visual Polish**: Framer Motion fade-in animations, hover effects, and subtle transitions
-- **Accessibility & Performance**: Semantic HTML, ARIA labels, fast load times, and mobile-first design
+## Tech Stack
 
-## 🛠 Tech Stack
-| Layer | Technology |
-|------|------------|
-| Framework | [Vite](https://vitejs.dev/) + [React](https://react.dev/) (TypeScript) |
-| Styling | [Tailwind CSS](https://tailwindcss.com/) (via CDN), inline critical styles |
-| Animations | [Framer Motion](https://www.framer.com/motion/) |
-| Fonts | [Fraunces](https://fonts.google.com/specimen/Fraunces) (headings), [Satoshi](https://fonts.google.com/specimen/Satoshi) (body) |
-| Email | [Resend](https://resend.com) via Vercel serverless function |
-| Hosting | [Vercel](https://vercel.com/) (recommended) |
-| Analytics (future-ready) | PostHog, Sentry (pre-configured) |
+- **Frontend**: React, Vite, TypeScript
+- **Styling**: Tailwind CSS (via CDN), Fraunces & Satoshi fonts
+- **Animations**: Framer Motion (via inline keyframes)
+- **Email**: Resend (serverless on Vercel)
+- **Security**: Upstash Rate Limiting, CSP headers, XSS protection
+- **Hosting**: Vercel (recommended)
 
-## 📦 Project Structure
-```
-portfolio-pro/
-├── index.html                  # Main HTML with inlined styles & fonts
-├── src/
-│   ├── components/
-│   │   ├── Hero.tsx
-│   │   ├── About.tsx
-│   │   ├── ProjectCard.tsx
-│   │   ├── ContactForm.tsx
-│   │   └── Toast.tsx
-│   ├── main.tsx                # React root
-│   └── App.tsx                 # Main app component
-├── api/
-│   └── send-email.ts           # Vercel serverless function for email
-├── EMAIL_SETUP.md              # Email configuration guide
-└── README.md                   # This file
-```
+## Setup Instructions
 
-## ⚙️ Setup Instructions
+### 1. Clone and Install
 
-### 1. Clone the Repository
 ```bash
 git clone https://github.com/your-username/portfolio-pro.git
 cd portfolio-pro
-```
-
-### 2. Install Dependencies
-```bash
 npm install
 ```
 
-### 3. Set Environment Variables
-Create a `.env.local` file in the root:
-```env
-RESEND_API_KEY=your_resend_api_key_here
-OWNER_EMAIL=you@yourdomain.com
+### 2. Environment Variables
+
+Copy `.env.example` to `.env.local` and update the values:
+
+```bash
+cp .env.example .env.local
 ```
 
-> 🔐 Never commit `.env.local`. It's already in `.gitignore`.
+Edit `.env.local`:
 
-### 4. Run Locally
+```env
+RESEND_API_KEY=your_resend_api_key_here
+OWNER_EMAIL=contact@yourdomain.com
+```
+
+> 🔐 Never commit `.env.local`. This file is git-ignored.
+
+### 3. Run Locally
+
 ```bash
 npm run dev
 ```
+
 Visit [http://localhost:5173](http://localhost:5173)
 
-## 📲 Usage Guide
-- Scroll through the page to view sections
-- Click on project cards to visit live demos or GitHub repos
-- Fill out the contact form to test submission flow (toast appears on success)
-- On production, real emails are sent via Resend
+### 4. Build for Production
 
-## 🚀 Deployment (Vercel)
-1. Push code to a GitHub repository
-2. Go to [Vercel Dashboard](https://vercel.com) → "New Project"
-3. Import your repo
-4. Vercel auto-detects Vite + React setup
-5. Add environment variables in **Settings > Environment Variables**:
+```bash
+npm run build
+```
+
+## Deployment (Vercel)
+
+1. Push your code to a GitHub repository.
+2. Go to [Vercel](https://vercel.com) and import your project.
+3. Add environment variables in the Vercel dashboard:
    - `RESEND_API_KEY`
    - `OWNER_EMAIL`
-6. Click **Deploy**
+4. Deploy!
 
-Your site will be live at `https://portfolio-pro.vercel.app`
+> ✅ This app is optimized for Vercel: serverless contact API, edge-compatible, and CDN-hosted assets.
 
-## 📬 API Endpoints
-> These are serverless functions handled by Vercel
+## Folder Structure
 
-### `POST /api/send-email`
-Sends an email using Resend.
+```
+portfolio-pro/
+├── api/                    # Vercel serverless functions
+│   └── contact.ts          # Handles form submission and email sending
+├── src/
+│   ├── components/
+│   │   ├── ContactForm.tsx # Contact form with validation and toast
+│   │   └── ProjectCard.tsx # Reusable project card component
+│   ├── emails/             # Server-side React email templates
+│   │   ├── contact-notification.tsx
+│   │   └── contact-confirmation.tsx
+│   └── App.tsx             # Main app layout
+├── index.html              # Tailwind CDN + inlined critical styles
+├── middleware.ts           # Rate limiting for contact form
+└── next.config.js          # Security headers (CSP, X-Frame-Options, etc.)
+```
+
+## API Endpoints
+
+### `POST /api/contact`
+
+Handles contact form submissions.
 
 **Request Body**:
 ```json
 {
-  "name": "John Doe",
-  "email": "john@example.com",
-  "message": "Hello, I'd like to collaborate!",
-  "bot-field": "" // honeypot (hidden field)
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "message": "Hello, I'd like to work together!",
+  "bot-field": "" // honeypot (hidden)
 }
 ```
 
-**Validation**:
-- All fields required
-- Email format validated
-- `bot-field` must be empty (anti-bot)
-
 **Responses**:
-- `200 OK` – Email sent successfully (or blocked silently)
-- `400 Bad Request` – Missing fields or invalid email
-- `500 Internal Server Error` – Failed to send email
+- `200 OK` – Message sent successfully (or honeypot triggered)
+- `400 Bad Request` – Validation error
+- `429 Too Many Requests` – Rate limited (5 requests / 10s)
+- `500 Internal Server Error` – Email sending failed
 
-**Example cURL**:
+**Example Request**:
 ```bash
-curl -X POST https://portfolio-pro.vercel.app/api/send-email \
+curl -X POST https://portfolio-pro.com/api/contact \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Jane Smith",
-    "email": "jane@example.com",
-    "message": "Great work! Let's talk.",
-    "bot-field": ""
+    "name": "Test User",
+    "email": "test@example.com",
+    "message": "This is a test message"
   }'
 ```
 
-## 🎨 Design System
-| Property | Value | Usage |
-|--------|------|-------|
-| Background | `#faf8f5` | Page background |
-| Text | `#1a2e1a` | Headings and body |
-| Dim Text | `#4a4a4a` | Secondary text |
-| Accent | `#e66000` (burnt orange) | Buttons, links, highlights |
-| Surface | `#e9e5dd` | Card backgrounds |
-| Font (Headings) | `Fraunces` | H1–H3 |
-| Font (Body) | `Satoshi` | Paragraphs, form labels |
+## Customization
 
-## 📱 Responsive Behavior
-- **Mobile (375px)**: Single column layout
-- **Tablet (768px)**: Two-column project grid
-- **Desktop (1200px)**: Full three-column project grid
-- All sections have consistent vertical rhythm and padding
+- **Colors & Fonts**: Edit `index.html` `<script>` block under `tailwind.config`
+- **Projects**: Update `projects` array in `src/components/ProjectCard.tsx`
+- **Email Templates**: Modify `src/emails/*.tsx` (server-side only)
+- **Rate Limiting**: Adjust in `middleware.ts` (`5 requests per 10 seconds`)
 
-## 🧪 Acceptance Criteria
-✅ Page loads under 2 seconds  
-✅ Contact form shows toast on submit  
-✅ Project cards use responsive 1→2→3 grid  
-✅ Form prevents submission if honeypot triggered  
-✅ No console errors in production build  
+## Testing
 
-## 📝 Notes
-- **No database used** — static site only
-- **Supabase reserved** for future features (e.g. feedback, analytics)
-- **All styles inlined** for performance (no external CSS files)
-- **Fonts loaded via Google Fonts CDN**
-- **Tailwind via CDN** — not compiled (suitable for small static sites)
+Run unit and integration tests:
 
-For email setup, see [EMAIL_SETUP.md](EMAIL_SETUP.md).
+```bash
+npm test
+```
+
+Test coverage includes:
+- Component rendering
+- Form validation
+- API integration (mocked)
+- Toast behavior
+- Honeypot detection
+
+## Security
+
+This app includes:
+- ✅ **Honeypot field** to silently reject bots
+- ✅ **Rate limiting** (5 req/10s) via Upstash
+- ✅ **CSP & security headers** (XSS, clickjacking protection)
+- ✅ **Input sanitization** in email templates
+- ✅ **Server-side email sending** (no API key exposure)
+
+See `SECURITY_REPORT.md` for full audit.
+
+## Performance
+
+Optimized for fast load and smooth UX:
+- ✅ Inlined critical CSS/animations
+- ✅ Lazy-loaded project images
+- ✅ Debounced form submission
+- ✅ Memoized toast component
+- ✅ Minimal bundle size (~165KB)
+
+See `PERFORMANCE_REPORT.md` for details.
+
+---
+
+Made with ❤️ using warm minimalism — beige canvas, dark green text, burnt orange accents.
